@@ -1,50 +1,124 @@
-# Welcome to your Expo app 👋
+flowchart TD
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+%% CAMADA CLIENTE
+A[App Mobile / Coletor] --> B[Leitura QR Code]
+A --> C[Leitura Nota Fiscal]
+A --> D[Inputs do Usuário]
 
-## Get started
+%% VALIDAÇÕES
+B --> E[Validação Usuário]
+E -->|/usuario_balcao/validar| F[Backend API]
 
-1. Install dependencies
+C --> G[Buscar NFE]
+G -->|/buscar_nfe| F
 
-   ```bash
-   npm install
-   ```
+%% CRIAÇÃO ROMANEIO
+D --> H[Configuração do Romaneio]
+H --> I[Tipo de Romaneio]
 
-2. Start the app
+I --> I1[Transportadora]
+I --> I2[Motorista]
+I --> I3[Transferência]
 
-   ```bash
-   npx expo start
-   ```
+H --> J[Selecionar Armazém]
+H --> K[Selecionar Transportadora]
+H --> L[Selecionar Motorista]
 
-In the output, you'll find options to open the app in a
+J -->|cache/offline| F
+K -->|cache/offline| F
+L -->|cache/offline| F
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+%% SALVAR ROMANEIO
+F --> M[Salvar Romaneio]
+M -->|/romaneio_embarque/salvar| N[Romaneio Criado]
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+%% DECISÃO FINALIZAÇÃO
+N --> O{Assinar agora?}
 
-## Get a fresh project
+O -->|Sim| P[Finalizar Romaneio]
+O -->|Não| Q[Pré-Romaneio]
 
-When you're ready, run:
+%% PRÉ-ROMANEIO
+Q -->|/pre-romaneio| R[Listagem Pendentes]
+R --> P
 
-```bash
-npm run reset-project
-```
+%% FINALIZAR ROMANEIO
+P --> S[Captura Dados]
+S --> S1[Foto Documento]
+S --> S2[Assinatura]
+S --> S3[Foto Produto]
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+S --> T[Upload Arquivos]
+T -->|/upload| F
 
-## Learn more
+P --> U[Verificar Imagem]
+U -->|/verificar-imagem| F
 
-To learn more about developing your project with Expo, look at the following resources:
+P --> V[Finalizar Processo]
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+%% ENTREGA BALCÃO
+V --> W[Entrega Balcão]
 
-## Join the community
+W --> X[Buscar Entregas]
+X -->|/buscar_entregas| F
 
-Join our community of developers creating universal apps.
+W --> Y[Selecionar Nota]
+Y --> Z[Visualizar Produtos]
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Z --> AA[Assinar Entrega]
+
+%% FINALIZAR ENTREGA
+AA --> AB[Captura Dados Entrega]
+AB --> AB1[Foto Produto]
+AB --> AB2[Foto Documento]
+AB --> AB3[Assinatura]
+AB --> AB4[CSAT]
+
+AB --> AC[Salvar Entrega]
+AC -->|/entrega/balcao/salvar| F
+
+%% TRANSFERÊNCIA
+V --> AD[Romaneio Entrada]
+
+AD --> AE[Visualizar Transferência]
+AE --> AF[Confirmar Recebimento]
+
+AF --> AG[Captura Assinatura]
+AF --> AH[Foto Documento]
+
+AF --> AI[Salvar Recebimento]
+AI -->|/romaneio_transferencias/recebimento| F
+
+%% MONTAGEM CARGA
+V --> AJ[Montagem de Carga]
+
+AJ --> AK[Leitura QR TMS]
+AJ --> AL[Validar Volume]
+
+AL --> AM{Romaneio Assinado?}
+AM -->|Sim| AN[Finaliza]
+AM -->|Não| P
+
+%% ORDEM DE SERVIÇO
+V --> AO[Ordem de Serviço]
+
+AO --> AP[Listar OS]
+AP --> AQ{Status}
+
+AQ -->|Aprovado| AR[Finalizar Aprovado]
+AQ -->|Reprovado| AS[Finalizar Reprovado]
+
+AR --> AT[Salvar OS]
+AS --> AT
+
+AT -->|/ordem_servico/finalizar| F
+
+%% COMPROVANTES
+V --> AU[Escanear Comprovantes]
+
+AU --> AV[Validar Usuário]
+AU --> AW[Buscar Nota]
+AU --> AX[Foto Comprovante]
+
+AX --> AY[Salvar]
+AY -->|/notas_pendentes/salvar| F
